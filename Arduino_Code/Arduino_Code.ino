@@ -14,9 +14,13 @@ Requirements: Sketch->Include->Manage Libraries:
 #include <Adafruit_GFX.h>
 #include <TimerOne.h>  
 
-const byte OLED = 1;                    // Turn on/off the OLED [1,0] (Set to 0 to improve deadtime)
-const byte LED  = 1;                    // Turn on/off the LED delay [1,0] (Set to 0 to improve deadtime)
+const byte OLED = 1;                    // Turn on/off the OLED [1,0] (Set to 0 to improve time)
+const byte LED  = 1;                    // Turn on/off the LED delay [1,0] (Set to 0 to improve time)
 const int SIGNAL_THRESHOLD = 25;        // Min threshold to trigger on
+const int LED_BRIGHTNESS = 255;          // Change the brightness on the LED [0-255]. 5 is a dim value.
+
+//Calibration fit data
+const float cal[] = {-5.5098831352873452E-14, 1.3827917597333878E-10, -1.2623647111629911E-07, 5.385584258312143E-05, -0.010166454350597643, 1.0023837059046123, 6.4910446124360828};
 
        
 //INTERUPT SETUP
@@ -27,13 +31,13 @@ const int SIGNAL_THRESHOLD = 25;        // Min threshold to trigger on
 Adafruit_SSD1306 display(OLED_RESET);   // Setup the OLED
 
 //initialize variables
-long measurement_t1               = 0L;      // Time stamp
-long measurement_t2               = 0L;      // Time stamp
-
-long t_start                      = 0L;      // Start time reference variable
-long total_deadtime               = 0L;      // total deadtime between signals
-unsigned int OLED_deadtime        = 0L;      // Deadtime from the time it takes to update the OLED
-unsigned int measurement_deadtime = 0L;      // Deadtime from the time it takes to perform the measuremnt
+long int measurement_t1               = 0L;      // Time stamp
+long int measurement_t2               = 0L;      // Time stamp
+long int t_start                      = 0L;      // Start time reference variable
+long int total_deadtime               = 0L;      // total time between signals
+int serial_time = 0;
+unsigned int OLED_time        = 0L;      // time from the time it takes to update the OLED
+unsigned int measurement_time = 0L;      // time from the time it takes to perform the measuremnt
 long int count                    = -1L;     // A tally of the number of muon counts observed
 float measurement_y1              = 0;
 
@@ -50,7 +54,6 @@ void setup() {
     delay(2000); 
     display.setTextSize(1);
   }
-
 
 pinMode(3, OUTPUT);                            // Setup the LED pin to output
 Timer1.initialize(TIMER_INTERVAL);             // Initialise timer 1
@@ -69,34 +72,27 @@ void loop() {
                
         measurement_t1 = millis() - t_start;  // Get the time stamp.        
         noInterrupts();                       // Turn of the interupts, so that it doesn't update the OLED screen mid measuremnt
-        digitalWrite(3, HIGH);                // Turn on the LED
+        analogWrite(3, LED_BRIGHTNESS);
         count++;                              // Increment the count
-        
+
         measurement_y1 = (A0_1 + A0_2 + A0_3) / 3.;  // Take the average measurement
 
-        // Model = N1 * (1-np.exp(-c1 * (x-a1))) + b1
-        // From calibration data
-        float N1 = 868.211092;
-        float a1 = 0.717076153;
-        float b1 = -15.1376897;
-        float c1 = 0.00380320728;
-
-        float SiPM_voltage1 = log(1-(measurement_y1 - b1)/N1)/(-c1) + a1; // Convert measured value to a SiPM voltage using the calibration.
-                
-        total_deadtime += (millis() - t_start - measurement_t1) + OLED_deadtime + measurement_deadtime; // Total deadtime from last measurement
-        
+        float SiPM_voltage = Calibration_fit(measurement_y1); // Convert measured value to a SiPM voltage using the calibration.
+        measurement_t2 = millis() - t_start;
+        total_deadtime += (measurement_t2 - measurement_t1);
         // Send the information through the serial port.
         if (count > 0){      
-          Serial.println((String)count + " " + measurement_t1 + " " +measurement_y1+" "+SiPM_voltage1+" " + (measurement_deadtime + OLED_deadtime));
+          Serial.println((String)count + " " + measurement_t1 + " " +measurement_y1+" "+SiPM_voltage+" " + ((measurement_t2 - measurement_t1) + OLED_time + serial_time));
         }
         
-        OLED_deadtime = 0;                  // Set the OLED deadtime back to 
+        OLED_time = 0;                  // Set the OLED time back to 
         interrupts();                       // Allow for interupts to update OLED       
-        delay(10);                          // Delay at least 1ms to allow the pusle to decay away.                           
+        delay(3);                          // Delay at least 1ms to allow the pusle to decay away.                           
         if (LED == 1){
           delay(measurement_y1);}
         digitalWrite(3, LOW);
-        measurement_deadtime = (millis()-t_start) - total_deadtime;
+        serial_time = (millis()-t_start) - measurement_t2;
+        total_deadtime += serial_time;  
         }
     }
 }
@@ -112,26 +108,37 @@ void timerIsr(){
 
 //Update OLED screen. 
 void getTime(){
-  long int t1               = (millis()-t_start);
+  long int OLED_t1               = (millis()-t_start);
   display.setCursor(0, 0);
-  float average               = count / ((t1 - total_deadtime) / 1000.);
-  float stdev                 = sqrt(count) / ((t1 - total_deadtime)/ 1000.);
+  float average = 0;
+  float std = 0;
   
+  long int OLED_t2 = (millis()-t_start) ;
+  total_deadtime += OLED_t2 - OLED_t1;
+  if ((OLED_t1 - total_deadtime) > 0){
+    average = count / ((OLED_t1 - total_deadtime) / 1000.);
+    std = sqrt(count) / ((OLED_t1 - total_deadtime)/ 1000.);
+  }
+  else {
+    average = 0;
+    std= 0;
+   }
+   
   display.clearDisplay();
   display.print(F("Total Count: "));
   display.println(count);
   display.print(F("Uptime: "));
   
-  int minutes = (t1 / 1000 / 60) % 60 ;
-  int seconds =  (t1 / 1000) % 60;
+  int minutes = (OLED_t1 / 1000 / 60) % 60 ;
+  int seconds =  (OLED_t1 / 1000) % 60;
   char     min_char[4];
   char     sec_char[4];
   sprintf(min_char,"%02d", minutes);
   sprintf(sec_char,"%02d", seconds);
   
-  display.println((String) (t1 / 1000 / 3600) + ":" + min_char + ":" + sec_char);
+  display.println((String) (OLED_t1 / 1000 / 3600) + ":" + min_char + ":" + sec_char);
   
-  if (measurement_y1 == 0){ 
+  if (count < 0){ 
     display.println(F("Initiallizing..."));
   }
   else{
@@ -145,16 +152,17 @@ void getTime(){
     }
     display.println(F(""));
   }
-  char     tmp2[4];
-  char     tmp[4];
-  dtostrf(average, 1, 3, tmp);
-  dtostrf(stdev, 1, 3, tmp2);
+  char     tmp_std[4];
+  char     tmp_average[4];
+  dtostrf(average, 1, 3, tmp_average);
+  dtostrf(std, 1, 3, tmp_std);
   display.print(F("Rate: "));
-  display.print((String)tmp);  
+  display.print((String)tmp_average);  
   display.print(F("+/-"));
-  display.println((String)tmp2);  
+  display.println((String)tmp_std);  
   display.display();
-  OLED_deadtime += ((millis()-t_start)-(t1));
+  OLED_time += (millis()-t_start)-OLED_t1;
+  total_deadtime += (millis()-t_start) - OLED_t2;
 }
 
 // This function runs the splash screen as you turn on the detector
@@ -168,3 +176,7 @@ void OpeningScreen(void) {
   display.clearDisplay();
 }
 
+// This function converts the measured ADC value to a SiPM voltage
+float Calibration_fit(float x){
+  return cal[0]*pow(x,6)+ cal[1]*pow(x,5)+cal[2]*pow(x,4)+cal[3]*pow(x,3)+cal[4]*pow(x,2)+cal[5]*pow(x,1)+cal[6];
+}

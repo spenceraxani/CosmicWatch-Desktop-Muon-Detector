@@ -7,7 +7,7 @@ In order to use the code, you must install the following libraries:
   2. Adafruit GFX Library -- by Adafruit Version 1.0.2
   3. TimerOne             -- by Jesse Tane et al. Version 1.1.0
 
-From Tools, select
+This can be done from the Arduino IDE: go to Tools, select
   1. Board = Arduino nano
   2. Port = the USB port that the Arduino is plugged into. If you don’t see it, you may need to install the CH340g driver
 
