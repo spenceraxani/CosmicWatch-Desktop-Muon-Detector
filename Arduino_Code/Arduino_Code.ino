@@ -110,8 +110,8 @@ void timerIsr(){
 void getTime(){
   long int OLED_t1                = (millis()-start_time);
   display.setCursor(0, 0);
-  float count_average                   = 0;
-  float count_std                       = 0;
+  float count_average             = 0;
+  float count_std                 = 0;
   long int OLED_t2                = (millis()-start_time);
   total_deadtime += OLED_t2 - OLED_t1;
   
