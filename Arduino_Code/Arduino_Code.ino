@@ -20,6 +20,7 @@ Requirements: Sketch->Include->Manage Libraries:
 const byte OLED = 1;                    // Turn on/off the OLED [1,0] (Set to 0 to improve time)
 const byte LED  = 0;                    // Turn on/off the LED delay [1,0] (Set to 0 to improve time)
 const int SIGNAL_THRESHOLD = 20;        // Min threshold to trigger on
+const int RESET_THRESHOLD = 9;          // Threshold to reset for next trigger
 const int LED_BRIGHTNESS = 255;          // Change the brightness on the LED [0-255]. 5 is a dim value.
 
 
@@ -110,7 +111,8 @@ void loop()
       
       digitalWrite(6, LOW);  
       digitalWrite(3, LOW);
-      while((analogRead(A0)+analogRead(A0)+analogRead(A0))/3. > (9)){continue;}
+      // Wait for signal to fall back down
+      while((analogRead(A0)+analogRead(A0)+analogRead(A0))/3. > RESET_THRESHOLD){continue;}
       
       total_deadtime += (micros() - measurement_t1 + 1062) / 1000.;
                        
