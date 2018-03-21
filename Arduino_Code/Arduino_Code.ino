@@ -18,8 +18,8 @@ Requirements: Sketch->Include->Manage Libraries:
 #include <EEPROM.h>
 
 const byte OLED = 1;                    // Turn on/off the OLED [1,0] (Set to 0 to improve time)
-const byte LED  = 0;                    // Turn on/off the LED delay [1,0] (Set to 0 to improve time)
-const int SIGNAL_THRESHOLD = 20;        // Min threshold to trigger on
+const byte LED  = 1;                    // Turn on/off the LED delay [1,0] (Set to 0 to improve time)
+const int SIGNAL_THRESHOLD = 200;        // Min threshold to trigger on
 const int LED_BRIGHTNESS = 255;          // Change the brightness on the LED [0-255]. 5 is a dim value.
 
 
@@ -86,7 +86,7 @@ void setup() {
 void loop() 
 {
   while (1) 
-  {
+  {Serial.println(A0);
     if (analogRead(A0) > SIGNAL_THRESHOLD)
     { 
       count++;      
@@ -110,7 +110,7 @@ void loop()
       
       digitalWrite(6, LOW);  
       digitalWrite(3, LOW);
-      while((analogRead(A0)+analogRead(A0)+analogRead(A0))/3. > (9)){continue;}
+      while((analogRead(A0)+analogRead(A0)+analogRead(A0))/3. > (50)){continue;}
       
       total_deadtime += (micros() - measurement_t1 + 1062) / 1000.;
                        
