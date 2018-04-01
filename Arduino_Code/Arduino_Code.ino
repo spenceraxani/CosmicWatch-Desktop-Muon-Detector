@@ -18,20 +18,17 @@ Requirements: Sketch->Include->Manage Libraries:
 #include <EEPROM.h>
 
 const byte OLED = 1;                    // Turn on/off the OLED [1,0] (Set to 0 to improve time)
-<<<<<<< HEAD
 const byte LED  = 1;                    // Turn on/off the LED delay [1,0] (Set to 0 to improve time)
-const int SIGNAL_THRESHOLD = 200;        // Min threshold to trigger on
-=======
 const byte LED  = 0;                    // Turn on/off the LED delay [1,0] (Set to 0 to improve time)
 const int SIGNAL_THRESHOLD = 20;        // Min threshold to trigger on
-const int RESET_THRESHOLD = 9;          // Threshold to reset for next trigger
->>>>>>> 91cad72ab91b3f463e2f8d0d393cc7944557af54
+const int RESET_THRESHOLD = 12;          // Threshold to reset for next trigger
 const int LED_BRIGHTNESS = 255;          // Change the brightness on the LED [0-255]. 5 is a dim value.
 
 
 //This calibration is for 499, 5pF, 10k
 //const float cal[] = {4.0614902396231111e-14, -7.8414735932155768e-11, 5.6819206951234577e-08, -1.7873823684604088e-05, 0.0029455520399522652, 0.01701073093454207, 26.268331951783924};
 //This calibration is for 499, 5pF, 10k
+
 const float cal[] = {9.038130548712698e-15, -1.4599909946491252e-12, -1.2626490003703338e-08, 1.1406923013075114e-05, -0.002891003749200569, 0.5003740521722947, 15.615470780166067};
 
 
@@ -116,12 +113,9 @@ void loop()
       
       digitalWrite(6, LOW);  
       digitalWrite(3, LOW);
-<<<<<<< HEAD
-      while((analogRead(A0)+analogRead(A0)+analogRead(A0))/3. > (50)){continue;}
-=======
+
       // Wait for signal to fall back down
       while((analogRead(A0)+analogRead(A0)+analogRead(A0))/3. > RESET_THRESHOLD){continue;}
->>>>>>> 91cad72ab91b3f463e2f8d0d393cc7944557af54
       
       total_deadtime += (micros() - measurement_t1 + 1062) / 1000.;
                        
