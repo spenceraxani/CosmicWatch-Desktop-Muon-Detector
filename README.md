@@ -1,4 +1,4 @@
-# CosmicWatch-Desktop-Muon-Detector
+# --OutDated-- CosmicWatch-Desktop-Muon-Detector
 The is an outdate version of the detector.
 The latest version (v2) can be found here:
 https://github.com/spenceraxani/CosmicWatch-Desktop-Muon-Detector-v2

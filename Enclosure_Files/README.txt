@@ -1,5 +1,5 @@
 This folder contains:
-1. The box dimensions from http://www.enclosuresandcasesinc.com/ for split body 2506H-2.9”
+1. The box dimensions from http://www.enclosuresandcasesinc.com/ for split body 2506-2.9”
 	1. You should get them anodized with the silkscreens:
 		Enclosure_silkscreen_bottom.pdf
 		Enclosure_silkscreen_top.pdf	
